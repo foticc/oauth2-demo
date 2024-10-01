@@ -1,0 +1,59 @@
+server:
+  port: 9001
+#spring:
+#  security:
+#    oauth2:
+#      client:
+#        provider:
+#          #认证服务器信息
+#          oauth-server:
+#            #授权地址
+#            issuer-uri: http://192.168.160.128:8888
+#            authorization-uri: ${spring.security.oauth2.client.provider.oauth-server.issuer-uri}/oauth2/authorize
+#            #令牌获取地址
+#            token-uri: ${spring.security.oauth2.client.provider.oauth-server.issuer-uri}/oauth2/token
+#            user-info-uri: ${spring.security.oauth2.client.provider.oauth-server.issuer-uri}/user
+#        registration:
+#          messaging-client-oidc:
+#            #认证提供者 标识由哪个认证服务器进行认证 和上方的oauth-server进行关联
+#            provider: oauth-server
+#            #客户端名称
+#            client-name: 测试
+#            # 客户端id,从认证平台申请的id
+#            client-id: client-id-test
+#            # 客户端密钥
+#            client-secret: secret
+#            # 客户端认证方式 授权码认证
+#            authorization-grant-type: authorization_code
+#            client-authentication-method: client_secret_basic
+#            redirect-uri: http://127.0.0.1:9001/login/oauth2/code/messaging-client-oidc
+#            scope:
+#              - profile
+#              - openid
+logging:
+  level:
+    org.springframework.security: trace
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          custom-issuer:
+#            issuer-uri: http://spring-oauth-server:8080
+            issuer-uri: http://192.168.160.128:8888
+            authorizationUri: ${spring.security.oauth2.client.provider.custom-issuer.issuer-uri}/oauth2/authorize
+            tokenUri: ${spring.security.oauth2.client.provider.custom-issuer.issuer-uri}/oauth2/token
+        registration:
+          messaging-client-oidc:
+            provider: custom-issuer
+            client-name: message-client
+            client-id: client-msg
+            client-secret: 123456
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: http://spring-oauth-client:9001/login/oauth2/code/messaging-client-oidc
+            scope:
+              - profile
+              - openid
+
+

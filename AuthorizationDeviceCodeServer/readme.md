@@ -1,0 +1,1 @@
+http://localhost:8889/oauth2/consent?client_id=device-client-id&scope=message.read&grant_type=

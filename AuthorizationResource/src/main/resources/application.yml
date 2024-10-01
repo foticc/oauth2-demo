@@ -1,0 +1,10 @@
+
+
+spring:
+  security:
+    oauth2:
+      resource-server:
+        jwt:
+          issuer-uri: http://localhost:8080
+server:
+  port: 9002

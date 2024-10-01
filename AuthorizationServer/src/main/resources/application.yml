@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: spring-oauth-server
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://121.41.65.116:3306/auth-admin?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+    username: admin
+    password: authadmin
+logging:
+  level:
+    org.springframework.security: trace
+server:
+  port: 8888
+

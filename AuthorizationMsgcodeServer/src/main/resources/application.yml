@@ -1,0 +1,18 @@
+
+
+spring:
+  application:
+    name: auth-server-msgcode
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://121.41.65.116:3306/auth-admin?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+    username: admin
+    password: authadmin
+  mail:
+    host: host.mail.com
+    username: login@mail.com
+logging:
+  level:
+    org.springframework.security: trace
+server:
+  port: 8889
