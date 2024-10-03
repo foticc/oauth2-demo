@@ -9,6 +9,6 @@ spring:
     password: authadmin
 logging:
   level:
-    org.springframework.security: trace
+    org.springframework.security.*: trace
 server:
   port: 8889

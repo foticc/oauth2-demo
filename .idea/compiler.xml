@@ -18,11 +18,11 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="AuthorizationClient" options="" />
+      <module name="AuthorizationClient" options="-parameters" />
       <module name="AuthorizationDeviceCodeServer" options="-parameters" />
-      <module name="AuthorizationMsgcodeServer" options="" />
+      <module name="AuthorizationMsgcodeServer" options="-parameters" />
       <module name="AuthorizationPasswordServer" options="-parameters" />
-      <module name="AuthorizationResource" options="" />
+      <module name="AuthorizationResource" options="-parameters" />
       <module name="AuthorizationServer" options="-parameters" />
       <module name="pkce" options="-parameters" />
     </option>

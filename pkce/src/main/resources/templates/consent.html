@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="https://www.thymeleaf.org/">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>授权确认 - OAuth2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f8fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .authorization-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 400px;
+            transition: all 0.3s ease;
+        }
+
+        .authorization-container:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 26px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        p {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .scope {
+            margin: 15px 0;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between; /* 按钮间隔 */
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px;
+            width: 48%; /* 保证按钮宽度相同 */
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .confirm-button {
+            background-color: #3490dc; /* 亮蓝色 */
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .confirm-button:hover {
+            background-color: #2779bd; /* 悬停时的深蓝色 */
+        }
+
+        .cancel-button {
+            background-color: #6c757d; /* 灰色 */
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .cancel-button:hover {
+            background-color: #5a6268; /* 悬停时更深的灰色 */
+        }
+    </style>
+    <script>
+        function cancelConsent() {
+            document.consent_form.reset()
+            document.consent_form.submit()
+        }
+    </script>
+</head>
+<body>
+<div class="authorization-container">
+    <h1>确认授权</h1>
+    <p>请选择您希望授予的权限：</p>
+    <form name="consent_form" method="post" action="/oauth2/authorize">
+        <div class="scope" th:each="item:${scope}">
+            <label>
+                <input th:id="${item}" type="checkbox" name="scope" th:value="${item}"/>
+                <th:block th:text="${item}"></th:block>
+            </label>
+        </div>
+        <div class="button-container">
+            <button type="submit" class="confirm-button">确认授权</button>
+            <button type="button" class="cancel-button" onclick="cancelConsent()">取消</button>
+        </div>
+        <input type="hidden" name="client_id" th:value="${client_id}">
+        <input type="hidden" name="state" th:value="${state}">
+    </form>
+</div>
+</body>
+</html>
