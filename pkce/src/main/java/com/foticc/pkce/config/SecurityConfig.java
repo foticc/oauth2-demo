@@ -33,6 +33,8 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceAuthorizationEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceVerificationEndpointFilter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -57,8 +59,13 @@ import java.util.function.Consumer;
  * @see org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter /oauth2/authorize
  * @see org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter  /oauth2/token
  *
+ * @see OAuth2DeviceAuthorizationEndpointFilter /oauth2/device_authorization
+ * @see OAuth2DeviceVerificationEndpointFilter  /oauth2/device_verification
+ *
+ *
  *
  * @see DefaultLoginPageGeneratingFilter  默认登录页面
+ * @see org.springframework.security.oauth2.server.authorization.web.DefaultConsentPage;
  */
 @Configuration
 @EnableWebSecurity
@@ -134,6 +141,24 @@ public class SecurityConfig {
 //                .build();
 //        //配置基于内存的客户端信息
 //        return new InMemoryRegisteredClientRepository(oidcClient);
+        RegisteredClient device = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("device-client")
+                .clientSecret("{noop}secret")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+                .redirectUri("http://127.0.0.1:9000/index")
+                .scopes(new Consumer<Set<String>>() {
+                    @Override
+                    public void accept(Set<String> strings) {
+                        strings.addAll(Set.of(
+                                OidcScopes.OPENID,
+                                OidcScopes.EMAIL,
+                                OidcScopes.PROFILE,
+                                OidcScopes.ADDRESS, OidcScopes.PHONE
+                        ));
+                    }
+                }).tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(2)).build())
+                .build();
         RegisteredClient oidcClient =
                 RegisteredClient.withId(UUID.randomUUID().toString())
                         .clientId("public-client")
@@ -163,7 +188,7 @@ public class SecurityConfig {
                                         .build()
                         )
                         .build();
-        return new InMemoryRegisteredClientRepository(oidcClient);
+        return new InMemoryRegisteredClientRepository(oidcClient,device);
     }
 
 
