@@ -148,7 +148,7 @@ OAuth 2.1去掉了OAuth2.0中的密码模式、简化模式，增加了设备授
 
 设备授权码登录官网交互图如下。
 
-![](D:\work\SpringAuthorizationServer\image\789.webp)
+![](image\789.webp)
 
 (A) 客户端带上包含客户端信息的参数向认证服务器（地址：/oauth2/device_authorization）发起授权访问。
 

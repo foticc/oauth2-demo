@@ -71,9 +71,9 @@ public class SecurityConfig {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .deviceAuthorizationEndpoint(oAuth2DeviceAuthorizationEndpointConfigurer -> oAuth2DeviceAuthorizationEndpointConfigurer.verificationUri("/activate"))
                 .deviceVerificationEndpoint(oAuth2DeviceVerificationEndpointConfigurer -> oAuth2DeviceVerificationEndpointConfigurer.consentPage(CUSTOM_CONSENT_PAGE_URI))
-                .clientAuthentication(oAuth2ClientAuthenticationConfigurer ->
-                        oAuth2ClientAuthenticationConfigurer.authenticationConverter(deviceClientAuthenticationConverter)
-                        .authenticationProvider(deviceClientAuthenticationProvider))
+//                .clientAuthentication(oAuth2ClientAuthenticationConfigurer ->
+//                        oAuth2ClientAuthenticationConfigurer.authenticationConverter(deviceClientAuthenticationConverter)
+//                        .authenticationProvider(deviceClientAuthenticationProvider))
                 .authorizationEndpoint(oAuth2AuthorizationEndpointConfigurer -> oAuth2AuthorizationEndpointConfigurer.consentPage(CUSTOM_CONSENT_PAGE_URI))
                 .oidc(Customizer.withDefaults());
 
