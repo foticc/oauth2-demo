@@ -173,7 +173,8 @@ public class SecurityConfig {
                                         "http://127.0.0.1:3000/",
                                         "http://127.0.0.1:3000/callback",
                                         "http://192.168.31.141:3000/callback",
-                                        "http://192.168.160.1:3000/"
+                                        "http://192.168.160.1:3000/",
+                                        "http://192.168.1.63:3000/"
                                 ));
                             }
                         })
@@ -211,7 +212,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.setAllowedOrigins(List.of("http://192.168.31.141:3000/", "http://127.0.0.1:3000"));
+        config.setAllowedOrigins(List.of("http://192.168.31.141:3000/", "http://127.0.0.1:3000","http://192.168.1.63:3000"));
         config.setAllowCredentials(true);
         source.registerCorsConfiguration("/**", config);
         return source;
