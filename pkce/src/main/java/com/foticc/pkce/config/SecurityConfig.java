@@ -1,5 +1,6 @@
 package com.foticc.pkce.config;
 
+import com.foticc.pkce.handler.FormAuthenticationFailureHandler;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -13,6 +14,9 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
+import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,6 +26,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -95,13 +100,15 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((authorize) -> authorize.anyRequest()
-                        .authenticated())
-                .formLogin(form->
-                    form.loginPage("/auth/page").permitAll()
-                                    .loginProcessingUrl("/login").permitAll()
-                );
+        http.formLogin(form->
+                    form.loginPage("/auth/page").loginProcessingUrl("/login")
+                            .failureHandler(new FormAuthenticationFailureHandler())
+                )
+                .authorizeHttpRequests((authorize) -> authorize.requestMatchers("/auth/page","/login").permitAll().anyRequest().authenticated());
 //                .formLogin(Customizer.withDefaults());
+//        http.sessionManagement(httpSecuritySessionManagementConfigurer -> {
+//            httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+//        });
         return http.cors(Customizer.withDefaults())
                 .build();
     }
@@ -174,7 +181,8 @@ public class SecurityConfig {
                                         "http://127.0.0.1:3000/callback",
                                         "http://192.168.31.141:3000/callback",
                                         "http://192.168.160.1:3000/",
-                                        "http://192.168.1.63:3000/"
+                                        "http://192.168.1.63:3000/",
+                                        "http://127.0.0.1:9000/index/hello"
                                 ));
                             }
                         })
@@ -252,6 +260,20 @@ public class SecurityConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().build();
+    }
+
+    @Bean
+    public OAuth2AuthorizationService authorizationService() {
+        return new InMemoryOAuth2AuthorizationService();
+    }
+
+    /**
+     * 授权确认
+     *对应表：oauth2_authorization_consent
+     */
+    @Bean
+    public OAuth2AuthorizationConsentService authorizationConsentService() {
+        return new InMemoryOAuth2AuthorizationConsentService();
     }
 
 }

@@ -79,6 +79,7 @@
          <input th:each="entry :${hidden}" th:id="${entry.key}" th:name="${entry.key}"  th:value="${entry.value}" type="hidden">
         <button type="submit">登录</button>
       </form>
+      <p th:text="${error}"></p>
       <p>没有账号？<a href="#">注册</a></p>
     </div>
   </body>

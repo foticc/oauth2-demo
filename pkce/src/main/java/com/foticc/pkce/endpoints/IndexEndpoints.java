@@ -23,9 +23,10 @@ public class IndexEndpoints {
     }
 
     @GetMapping("/auth/page")
-    public String auth(Model model,HttpServletRequest request) {
+    public String auth(Model model,@RequestParam(required = false) String error,HttpServletRequest request) {
         Map<String, String> hidden = this.hiddenInputs(request);
         model.addAttribute("hidden",hidden);
+        model.addAttribute("error",error);
         return "login";
     }
 
