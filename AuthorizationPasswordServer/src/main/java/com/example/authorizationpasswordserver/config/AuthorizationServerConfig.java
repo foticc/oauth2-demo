@@ -105,20 +105,11 @@ public class AuthorizationServerConfig {
                                 new LoginUrlAuthenticationEntryPoint("/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
-                )
-                .oauth2ResourceServer(oauth2ResourceServer ->
-                        oauth2ResourceServer.jwt(Customizer.withDefaults()));
+                );
         return http.build();
     }
 
-    @Bean
-    @Order(2)
-    public SecurityFilterChain securityFilterChain2(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((authrequest)->{
-            authrequest.anyRequest().authenticated();
-        });
-        return http.build();
-    }
+
     /**
      * 客户端信息
      * 对应表：oauth2_registered_client
@@ -167,18 +158,18 @@ public class AuthorizationServerConfig {
      *配置 JWK，为JWT(id_token)提供加密密钥，用于加密/解密或签名/验签
      * JWK详细见：https://datatracker.ietf.org/doc/html/draft-ietf-jose-json-web-key-41
      */
-    @Bean
-    public JWKSource<SecurityContext> jwkSource() {
-        KeyPair keyPair = generateRsaKey();
-        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        RSAKey rsaKey = new RSAKey.Builder(publicKey)
-                .privateKey(privateKey)
-                .keyID(UUID.randomUUID().toString())
-                .build();
-        JWKSet jwkSet = new JWKSet(rsaKey);
-        return new ImmutableJWKSet<>(jwkSet);
-    }
+//    @Bean
+//    public JWKSource<SecurityContext> jwkSource() {
+//        KeyPair keyPair = generateRsaKey();
+//        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+//        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+//        RSAKey rsaKey = new RSAKey.Builder(publicKey)
+//                .privateKey(privateKey)
+//                .keyID(UUID.randomUUID().toString())
+//                .build();
+//        JWKSet jwkSet = new JWKSet(rsaKey);
+//        return new ImmutableJWKSet<>(jwkSet);
+//    }
 
     /**
      *生成RSA密钥对，给上面jwkSource() 方法的提供密钥对
@@ -198,11 +189,11 @@ public class AuthorizationServerConfig {
 
     /**
      * 配置jwt解析器
-     */
-    @Bean
-    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-    }
+//     */
+//    @Bean
+//    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+//        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+//    }
 
     /**
      *配置认证服务器请求地址
