@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
@@ -50,7 +51,8 @@ import java.util.UUID;
 /**
  * @see <a href="https://docs.spring.io/spring-authorization-server/reference/guides/how-to-ext-grant-type.html">...</a>
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
+@EnableWebSecurity(debug = true) //开启Security
 public class AuthorizationServerConfig {
 
     private static final String CUSTOM_CONSENT_PAGE_URI = "/oauth2/consent";
@@ -111,14 +113,12 @@ public class AuthorizationServerConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> {
-            authorizationManagerRequestMatcherRegistry.anyRequest().authenticated();
+    public SecurityFilterChain securityFilterChain2(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests((authrequest)->{
+            authrequest.anyRequest().authenticated();
         });
-        return http.cors(Customizer.withDefaults())
-                .build();
+        return http.build();
     }
-
     /**
      * 客户端信息
      * 对应表：oauth2_registered_client
