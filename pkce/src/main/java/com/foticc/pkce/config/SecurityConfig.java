@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceAuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceVerificationEndpointFilter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -106,9 +107,10 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests((authorize) -> authorize.requestMatchers("/auth/page","/login").permitAll().anyRequest().authenticated());
 //                .formLogin(Customizer.withDefaults());
-//        http.sessionManagement(httpSecuritySessionManagementConfigurer -> {
-//            httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-//        });
+        http.sessionManagement(httpSecuritySessionManagementConfigurer -> {
+            // 仅在需要的时候创建
+            httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED);
+        });
         return http.cors(Customizer.withDefaults())
                 .build();
     }
@@ -182,7 +184,8 @@ public class SecurityConfig {
                                         "http://192.168.31.141:3000/callback",
                                         "http://192.168.160.1:3000/",
                                         "http://192.168.1.63:3000/",
-                                        "http://127.0.0.1:9000/index/hello"
+                                        "http://127.0.0.1:9000/index/hello",
+                                        "http://192.168.1.63:3000/login"
                                 ));
                             }
                         })
@@ -275,5 +278,6 @@ public class SecurityConfig {
     public OAuth2AuthorizationConsentService authorizationConsentService() {
         return new InMemoryOAuth2AuthorizationConsentService();
     }
+
 
 }
