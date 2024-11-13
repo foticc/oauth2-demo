@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,16 +21,24 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.*;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationEndpointConfigurer;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2TokenEndpointConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.*;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -42,6 +49,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
 import java.util.UUID;
 
 
@@ -112,8 +120,35 @@ public class AuthorizationServerConfig {
      * 对应表：oauth2_registered_client
      */
     @Bean
-    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
-        return new JdbcRegisteredClientRepository(jdbcTemplate);
+    public RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
+        RegisteredClient client = RegisteredClient.withId("clientid")
+                .clientId("client-msg")
+                .clientName("客户端")
+                .clientSecret(passwordEncoder.encode("123456"))
+//                .clientSecret(token)
+                //客户端认证方式 ，
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)   //basic认证 Authorization: Basic Y2xpZW50LW1zZzoxMjM0NTYx
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)  //账号密码放表单里
+                // 配置该客户端支持的授权方式
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(new AuthorizationGrantType("authorization_password"))
+                // 可跳转的地址
+                .redirectUri("http://spring-oauth-client:8001/token")
+                .redirectUri("http://spring-oauth-client:8001/test")
+                .redirectUri("http://spring-oauth-client:8001/login/oauth2/code/messaging-client-oidc")
+                .redirectUri("http://spring-oauth-client:8001/system/test")
+                .redirectUri("http://www.baidu.com")
+                // scope 可访问的范围
+                .scope(OidcScopes.PROFILE)
+                .scope(OidcScopes.OPENID)
+                // 客户端设置，设置用户需要确认授权
+                .clientSettings(ClientSettings.builder().requireProofKey(true).requireAuthorizationConsent(true).tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256).build())
+                // token的相关设置
+                .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(24)).refreshTokenTimeToLive(Duration.ofHours(48)).build())
+                .build();
+        return new InMemoryRegisteredClientRepository(client);
     }
 
     @Bean
@@ -133,7 +168,7 @@ public class AuthorizationServerConfig {
      * 对应表：oauth2_authorization
      */
     @Bean
-    public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+    public OAuth2AuthorizationService authorizationService() {
         return new InMemoryOAuth2AuthorizationService();
     }
 
@@ -142,7 +177,7 @@ public class AuthorizationServerConfig {
      *对应表：oauth2_authorization_consent
      */
     @Bean
-    public OAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+    public OAuth2AuthorizationConsentService authorizationConsentService() {
         return new InMemoryOAuth2AuthorizationConsentService();
     }
 
@@ -193,12 +228,19 @@ public class AuthorizationServerConfig {
 //    }
 
     /**
-     *配置认证服务器请求地址
+     * 添加认证服务器配置，设置jwt签发者、默认端点请求地址等
+     *
+     * @return AuthorizationServerSettings
      */
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        //什么都不配置，则使用默认地址
-        return AuthorizationServerSettings.builder().build();
+        return AuthorizationServerSettings.builder()
+                /*
+                    设置token签发地址(http(s)://{ip}:{port}/context-path, http(s)://domain.com/context-path)
+                    如果需要通过ip访问这里就是ip，如果是有域名映射就填域名，通过什么方式访问该服务这里就填什么
+                 */
+                .issuer("http://127.0.0.1:8889")
+                .build();
     }
 
     /**

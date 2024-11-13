@@ -5,7 +5,8 @@ spring:
     oauth2:
       resource-server:
         jwt:
-          issuer-uri: http://localhost:8889
+          # 要与认证服务器的一致 否则 jwt 会认证失败，jwt 中 issr属性
+          issuer-uri: http://127.0.0.1:8889
 server:
   port: 9002
 logging:

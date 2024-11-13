@@ -11,7 +11,7 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 @EnableMethodSecurity(jsr250Enabled = true,securedEnabled = true)
 public class ResourceServerConfig {
 

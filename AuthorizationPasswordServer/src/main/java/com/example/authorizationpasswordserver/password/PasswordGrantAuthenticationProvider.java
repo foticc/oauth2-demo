@@ -68,8 +68,11 @@ public class PasswordGrantAuthenticationProvider implements AuthenticationProvid
         OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(authentication);
 
         RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
+        if (registeredClient == null) {
+            throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
+        }
         // 如果客户端不包含 此种认证模式
-        if (registeredClient!=null && !registeredClient.getAuthorizationGrantTypes().contains(grantType)){
+        if (!registeredClient.getAuthorizationGrantTypes().contains(grantType)){
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
         }
 
@@ -84,6 +87,7 @@ public class PasswordGrantAuthenticationProvider implements AuthenticationProvid
                 .principal(clientPrincipal)
                 .authorizationServerContext(AuthorizationServerContextHolder.getContext())
                 .authorizationGrantType(grantType)
+                .authorizedScopes(registeredClient.getScopes())
                 .authorizationGrant(passwordGrantAuthenticationToken);
 
         OAuth2TokenContext tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN).build();
@@ -98,7 +102,7 @@ public class PasswordGrantAuthenticationProvider implements AuthenticationProvid
         OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
                 generatedAccessToken.getTokenValue(),
                 generatedAccessToken.getIssuedAt(),
-                generatedAccessToken.getExpiresAt(), null);
+                generatedAccessToken.getExpiresAt(), registeredClient.getScopes());
 
         OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
                 .principalName(clientPrincipal.getName())
@@ -130,7 +134,7 @@ public class PasswordGrantAuthenticationProvider implements AuthenticationProvid
                 authorizationBuilder.refreshToken(refreshToken);
             }
         }
-        OAuth2Authorization build = authorizationBuilder.build();
+        OAuth2Authorization build = authorizationBuilder.authorizedScopes(registeredClient.getScopes()).build();
         this.authorizationService.save(build);
         return new OAuth2AccessTokenAuthenticationToken(registeredClient,clientPrincipal,accessToken,refreshToken);
     }
