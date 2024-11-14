@@ -34,6 +34,17 @@ public class MessageCodeAuthenticationConverter implements AuthenticationConvert
                 parameters.get(OAuth2Constant.PARAMETER_NAME_MESSAGE_CODE).size() != 1) {
             throw new OAuth2AuthenticationException("无效请求，验证码不能为空！");
         }
+
+        String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
+        if (!StringUtils.hasText(scope) ||
+                parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
+            throw new OAuth2AuthenticationException("无效请求！");
+        }
+        String username = parameters.getFirst(OAuth2ParameterNames.USERNAME);
+        if (!StringUtils.hasText(username) ||
+                parameters.get(OAuth2ParameterNames.USERNAME).size() != 1) {
+            throw new OAuth2AuthenticationException("无效请求！");
+        }
         //收集要传入GrantAuthenticationToken构造方法的参数，
         //该参数接下来在GrantAuthenticationProvider中使用
         Map<String, Object> additionalParameters = new HashMap<>();

@@ -1,6 +1,7 @@
 package com.example.authorizationmsgcodeserver.msg;
 
 import com.example.authorizationmsgcodeserver.config.OAuth2Constant;
+import com.example.authorizationmsgcodeserver.config.VirtualMessageContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -20,6 +21,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
+import org.springframework.util.StringUtils;
 
 import java.security.Principal;
 import java.util.IllegalFormatCodePointException;
@@ -78,13 +80,17 @@ public class MessageCodeAuthenticationProvider implements AuthenticationProvider
         }
         // 其它处理
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        if (!"123".equals(msg)) {
-            throw new OAuth2AuthenticationException("验证码不正确");
-        }
 
 
         UsernamePasswordAuthenticationToken authenticated =
                 UsernamePasswordAuthenticationToken.authenticated(userDetails, clientPrincipal, userDetails.getAuthorities());
+
+        // 模拟验证码
+        String message = VirtualMessageContext.getInstance().getMessage(userDetails.getUsername());
+        if (!StringUtils.hasText(message) || !message.equalsIgnoreCase(msg)) {
+            throw new OAuth2AuthenticationException("验证码不正确");
+        }
+
 
         DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
                 .registeredClient(registeredClient)

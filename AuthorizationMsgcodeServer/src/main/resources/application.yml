@@ -3,9 +3,6 @@
 spring:
   application:
     name: auth-server-msgcode
-  mail:
-    host: host.mail.com
-    username: login@mail.com
 logging:
   level:
     org.springframework.security: trace
