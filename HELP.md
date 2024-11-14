@@ -10,13 +10,13 @@ OAuth 2.0 是一种认证授权协议标准，有客户端模式（client_creden
 认证服务器（authorization server）：对客户端和用户进行身份认证、授权的服务器，认证授权成功，则颁发令牌（token）。
 
 ### 1. 客户端模式
-![](D:\work\SpringAuthorizationServer\image\12151535_65279d17c094278326.webp)
+![](image\12151535_65279d17c094278326.webp)
 
 客户端模式是安全级别最低而且要求认证服务器对客户高度信任的模式，因为客户端向认证服务器请求认证授权的过程中，至始至终都没有用户的参与，未经过用户允许，
 客户端凭提供自己在认证服务器注册的信息即可在认证服务器完成认证授权，而客户端获得认证授权以后，则拥有从资源服务器操作用户数据的权限，
 这种模式一般应用于公司内部系统或者有着高度保密责任的合作伙伴之间的对接。客户端模式的时序图如下。
 
-![](D:\work\SpringAuthorizationServer\image\12151535_65279d176ff2374018.svg)
+![](image\12151535_65279d176ff2374018.svg)
 1：客户端首先在认证服务器注册好客户端信息。
 
 2：认证服务器存储维护客户端信息。
@@ -29,14 +29,14 @@ OAuth 2.0 是一种认证授权协议标准，有客户端模式（client_creden
 
 ### 2.密码模式
 
-![](D:\work\SpringAuthorizationServer\image\12151535_65279d1795de250633.webp)
+![](image\12151535_65279d1795de250633.webp)
 密码模式是一种安全级别较低而且要求资源拥有者（用户）完全信任客户端的模式，该模式可以理解为在客户端模式的基础上增加了对用户的账号、
 密码在认证服务器进行校验的操作，是客户端代理用户的操作。在 OAuth 2.1 中，密码模式已经被废除，在第三方平台上，使用密码模式，
 对于用户来说是一种非常不安全的行为，假设某平台客户端支持 QQ 登录，用户使用自己 QQ 的账号、密码在该平台上输入进行登录，则该平台将拥有用户 QQ 的账号、密码，对于用户来说，
 将自己 QQ 的账号、密码提供给第三方平台，这种行为是非常不安全的。密码模式一般适合应用在自己公司内部使用的系统和自己公司的 app 产品，例如一些 ERP、CRM、WMS 系统，
 因为都是自己公司的产品，这种情况下就不存在用户提供账号、密码给第三方客户端进行代理登录的情形了。密码模式的时序图如下。
 
-![](D:\work\SpringAuthorizationServer\image\password.svg)
+![](image\password.svg)
 
 1：客户端首先在认证服务器注册好客户端信息。
 
@@ -54,12 +54,12 @@ OAuth 2.0 是一种认证授权协议标准，有客户端模式（client_creden
 
 ### 3. 授权码模式
 
-![](D:\work\SpringAuthorizationServer\image\authorization_code.webp)
+![](image\authorization_code.webp)
 
 授权码模式是 OAuth 2.0 协议中安全级别最高的一种认证模式，他与密码模式一样，都需要使用到用户的账号信息在认证平台的登录操作，
 但有所不同的是，密码模式是要求用户直接将自己在认证平台的账号、密码提供给第三方应用（客户端），由第三方平台进行代理用户在认证平台的登录操作；
 而授权码模式则是用户在认证平台提供的界面进行登录，然后通过用户确认授权后才将一次性授权码提供给第三方应用，第三方应用拿到一次性授权码以后才去认证平台获取 token。授权码模式的时序图如下。
-![](D:\work\SpringAuthorizationServer\image\auth_code_time_line.svg)
+![](image\auth_code_time_line.svg)
 1：客户端首先在认证服务器注册好客户端信息。
 
 2：认证服务器存储维护客户端信息。
@@ -84,14 +84,14 @@ OAuth 2.0 是一种认证授权协议标准，有客户端模式（client_creden
 
 ### 4. token刷新模式
 
-![](D:\work\SpringAuthorizationServer\image\refresh_token.webp)
+![](image\refresh_token.webp)
 
 token刷新模式是对 access_token 过期的一种补办操作，这种补办操作，减少了用户重新操作登录的流程。OAuth 2.0 在给客户端颁发 access_token 的时候，
 同时也给客户端发放了 refresh_token，而 refresh_token 的有效期要远大于 access_token 的有效期。当客户端带着已过期的 access_token 去访问资源服务器中受保护的资源时，
 将会访问失败，此时就需要客户端使用 refresh_token 去获取新的 access_token。客户端端获取到新的 access_token 后，就可以带上他去访问资源服务器中受保护的资源了。
 token 刷新模式时序图如下。
 
-![](D:\work\SpringAuthorizationServer\image\refresh_code_time_line.svg)
+![](image\refresh_code_time_line.svg)
 
 1：客户端向认证服务器请求认证授权。
 
@@ -121,7 +121,7 @@ OAuth 2.1去掉了OAuth2.0中的密码模式、简化模式，增加了设备授
 授权码模式交互过程，见上文 OAuth2.0 授权码模式的讲解。这里要说的是授权码模式如何拓展 PKCE。
 在授权码模式的交互工程中，有一个环节比较薄弱，这个环节就是用户在代理页面确认授权的时候，容易受到恶意程序的攻击，从而导致授权码被恶意程序窃取，
 进而通过授权码窃取令牌，当然这个前提也需要恶意程序已经植入到你的PC或手机当中。首先，来看一下官网中描述的恶意程序拦截攻击授权码的交互图。
-![](D:\work\SpringAuthorizationServer\image\123.webp)
+![](image\123.webp)
 （1）客户端向认证服务器发起获取授权码请求时，跳转至授权确认页面，用户通过用浏览器在授权页面进行授权确认。
 
 （2）授权页面向认证服务器提交客户端参数和授权范围。
@@ -132,7 +132,7 @@ OAuth 2.1去掉了OAuth2.0中的密码模式、简化模式，增加了设备授
 
 为了减轻这种攻击，官方增加PKCE扩展，先来看一下官方的交互图。
 
-![](D:\work\SpringAuthorizationServer\image\456.webp)
+![](image\456.webp)
 
 ### 3.设备授权码模式
 
@@ -176,7 +176,7 @@ OAuth2.1 也提供拓展授权模式的操作实现。虽然 OAuth2.1 移除了�
 
 OpenID Connect 1.0 的交互过程如下。
 
-![](D:\work\SpringAuthorizationServer\image\101112.webp)
+![](image\101112.webp)
 
 OP：OpenID Provider，即 OAuth 2.0 中的认证服务器。
 
