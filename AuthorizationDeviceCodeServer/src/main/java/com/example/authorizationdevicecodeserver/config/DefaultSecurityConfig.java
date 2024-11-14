@@ -26,16 +26,5 @@ public class DefaultSecurityConfig {
         return httpSecurity.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails userDetails = User.withDefaultPasswordEncoder()
-                .username("user")
-                .password("password")
-                .roles("USER")
-                .build();
-        //基于内存的用户数据校验
-        return new InMemoryUserDetailsManager(userDetails);
-    }
-
 
 }

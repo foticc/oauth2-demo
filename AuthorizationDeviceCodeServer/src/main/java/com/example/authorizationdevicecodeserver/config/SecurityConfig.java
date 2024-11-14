@@ -11,26 +11,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.*;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.*;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -86,7 +86,22 @@ public class SecurityConfig {
     }
 
 
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails userDetails = User.builder()
+                .username("user")
+                .password("password")
+                .roles("USER")
+                .build();
+        //基于内存的用户数据校验
+        return new InMemoryUserDetailsManager(userDetails);
+    }
 
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return NoOpPasswordEncoder.getInstance();
+    }
 
     /**
      *
@@ -96,7 +111,7 @@ public class SecurityConfig {
      * @return
      */
     @Bean
-    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+    public RegisteredClientRepository registeredClientRepository() {
 //        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
 //                .clientId("oidc-client")
 //                .clientSecret("{noop}secret")
@@ -109,29 +124,27 @@ public class SecurityConfig {
 //                .scope(OidcScopes.PROFILE)
 //                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
 //                .build();
-//        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-//                .clientId("oidc-client")
-//                //{noop}开头，表示“secret”以明文存储
-//                .clientSecret("{noop}secret")
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-//                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-//                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-//                //.redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
-//                //将上面的redirectUri地址注释掉，改成下面的地址，是因为我们暂时还没有客户端服务，以免重定向跳转错误导致接收不到授权码
-//                .redirectUri("http://www.baidu.com")
-//                //退出操作，重定向地址，暂时也没遇到
-//                .postLogoutRedirectUri("http://127.0.0.1:8080/")
-//                //设置客户端权限范围
-//                .scope(OidcScopes.OPENID)
-//                .scope(OidcScopes.PROFILE)
-//                //客户端设置用户需要确认授权
-//                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-//                .build();
-//        //配置基于内存的客户端信息
-//        return new InMemoryRegisteredClientRepository(oidcClient);
-
-
-        return new JdbcRegisteredClientRepository(jdbcTemplate);
+        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("device-client-id")
+                //{noop}开头，表示“secret”以明文存储
+                .clientSecret("secret")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.DEVICE_CODE)
+                //.redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
+                //将上面的redirectUri地址注释掉，改成下面的地址，是因为我们暂时还没有客户端服务，以免重定向跳转错误导致接收不到授权码
+                .redirectUri("http://www.baidu.com")
+                //退出操作，重定向地址，暂时也没遇到
+                .postLogoutRedirectUri("http://127.0.0.1:8080/")
+                //设置客户端权限范围
+                .scope(OidcScopes.OPENID)
+                .scope(OidcScopes.PROFILE)
+                //客户端设置用户需要确认授权
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .build();
+        //配置基于内存的客户端信息
+        return new InMemoryRegisteredClientRepository(oidcClient);
     }
 
     /**
@@ -139,8 +152,8 @@ public class SecurityConfig {
      * 对应表：oauth2_authorization
      */
     @Bean
-    public OAuth2AuthorizationService auth2AuthorizationService(JdbcTemplate jdbcTemplate,RegisteredClientRepository registeredClientRepository) {
-        return new JdbcOAuth2AuthorizationService(jdbcTemplate,registeredClientRepository);
+    public OAuth2AuthorizationService auth2AuthorizationService() {
+        return new InMemoryOAuth2AuthorizationService();
     }
 
     /**
@@ -148,8 +161,8 @@ public class SecurityConfig {
      *对应表：oauth2_authorization_consent
      */
     @Bean
-    public OAuth2AuthorizationConsentService auth2AuthorizationConsentService(JdbcTemplate jdbcTemplate,RegisteredClientRepository registeredClientRepository) {
-        return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate,registeredClientRepository);
+    public OAuth2AuthorizationConsentService auth2AuthorizationConsentService() {
+        return new InMemoryOAuth2AuthorizationConsentService();
     }
 
 
@@ -186,6 +199,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        return AuthorizationServerSettings.builder().build();
+        return AuthorizationServerSettings.builder()
+                .issuer("http://127.0.0.1").build();
     }
 }
