@@ -189,7 +189,14 @@ public class SecurityConfig {
                                 ));
                             }
                         })
-                        .postLogoutRedirectUri("http://127.0.0.1:9000/logout")
+                        .postLogoutRedirectUris(new Consumer<Set<String>>() {
+                            @Override
+                            public void accept(Set<String> urls) {
+                                urls.add(
+                                    "http://192.168.1.63:3000/"
+                                );
+                            }
+                        })
                         .scope(OidcScopes.OPENID).scope(OidcScopes.EMAIL)
                         .scope(OidcScopes.PROFILE)
                         .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(2)).build())
