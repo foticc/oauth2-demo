@@ -9,11 +9,13 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -46,6 +48,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.security.web.server.ui.LoginPageGeneratingWebFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -64,12 +67,8 @@ import java.util.function.Consumer;
 /**
  * @see org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter /oauth2/authorize
  * @see org.springframework.security.oauth2.server.authorization.web.OAuth2TokenEndpointFilter  /oauth2/token
- *
  * @see OAuth2DeviceAuthorizationEndpointFilter /oauth2/device_authorization
  * @see OAuth2DeviceVerificationEndpointFilter  /oauth2/device_verification
- *
- *
- *
  * @see DefaultLoginPageGeneratingFilter  默认登录页面
  * @see org.springframework.security.oauth2.server.authorization.web.DefaultConsentPage;
  */
@@ -84,7 +83,7 @@ public class SecurityConfig {
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-                .authorizationEndpoint(endpoints->{
+                .authorizationEndpoint(endpoints -> {
                     endpoints.consentPage(CUSTOM_CONSENT_PAGE_URI);
                 })
                 .oidc(Customizer.withDefaults());
@@ -101,11 +100,17 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.formLogin(form->
-                    form.loginPage("/auth/page").loginProcessingUrl("/login")
-                            .failureHandler(new FormAuthenticationFailureHandler())
+        http.formLogin(form ->
+                        form.loginPage("/auth/page").loginProcessingUrl("/login")
+                                .failureHandler(new FormAuthenticationFailureHandler())
                 )
-                .authorizeHttpRequests((authorize) -> authorize.requestMatchers("/auth/page","/login").permitAll().anyRequest().authenticated());
+                .authorizeHttpRequests((authorize) -> authorize.requestMatchers("/auth/page", "/login").permitAll().anyRequest().authenticated())
+                .logout(new Customizer<LogoutConfigurer<HttpSecurity>>() {
+                    @Override
+                    public void customize(LogoutConfigurer<HttpSecurity> httpSecurityLogoutConfigurer) {
+                        httpSecurityLogoutConfigurer.logoutRequestMatcher(new AntPathRequestMatcher("/logout", HttpMethod.GET.name()));
+                    }
+                });
 //                .formLogin(Customizer.withDefaults());
         http.sessionManagement(httpSecuritySessionManagementConfigurer -> {
             // 仅在需要的时候创建
@@ -192,8 +197,12 @@ public class SecurityConfig {
                         .postLogoutRedirectUris(new Consumer<Set<String>>() {
                             @Override
                             public void accept(Set<String> urls) {
-                                urls.add(
-                                    "http://192.168.1.63:3000/"
+                                urls.addAll(
+                                        Set.of(
+                                                "http://192.168.1.63:3000/",
+                                                "http://127.0.0.1:3000/"
+                                        )
+
                                 );
                             }
                         })
@@ -207,7 +216,7 @@ public class SecurityConfig {
                                         .build()
                         )
                         .build();
-        return new InMemoryRegisteredClientRepository(oidcClient,device);
+        return new InMemoryRegisteredClientRepository(oidcClient, device);
     }
 
 
@@ -230,7 +239,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.setAllowedOrigins(List.of("http://192.168.31.141:3000/", "http://127.0.0.1:3000","http://192.168.1.63:3000"));
+        config.setAllowedOrigins(List.of("http://192.168.31.141:3000/", "http://127.0.0.1:3000", "http://192.168.1.63:3000"));
         config.setAllowCredentials(true);
         source.registerCorsConfiguration("/**", config);
         return source;
@@ -255,8 +264,7 @@ public class SecurityConfig {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
             keyPairGenerator.initialize(2048);
             keyPair = keyPairGenerator.generateKeyPair();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
         return keyPair;
@@ -279,7 +287,7 @@ public class SecurityConfig {
 
     /**
      * 授权确认
-     *对应表：oauth2_authorization_consent
+     * 对应表：oauth2_authorization_consent
      */
     @Bean
     public OAuth2AuthorizationConsentService authorizationConsentService() {
