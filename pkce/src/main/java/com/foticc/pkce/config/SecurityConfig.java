@@ -190,7 +190,8 @@ public class SecurityConfig {
                                         "http://192.168.160.1:3000/",
                                         "http://192.168.1.63:3000/",
                                         "http://127.0.0.1:9000/index/hello",
-                                        "http://192.168.1.63:3000/login"
+                                        "http://192.168.1.63:3000/login",
+                                        "http://127.0.0.1:4201"
                                 ));
                             }
                         })
@@ -200,7 +201,8 @@ public class SecurityConfig {
                                 urls.addAll(
                                         Set.of(
                                                 "http://192.168.1.63:3000/",
-                                                "http://127.0.0.1:3000/"
+                                                "http://127.0.0.1:3000/",
+                                                "http://127.0.0.1:4201"
                                         )
 
                                 );
