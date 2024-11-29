@@ -14,11 +14,13 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,6 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
@@ -40,6 +43,8 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceAuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2DeviceVerificationEndpointFilter;
@@ -59,10 +64,9 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * @see org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter /oauth2/authorize
@@ -185,13 +189,18 @@ public class SecurityConfig {
                                 strings.addAll(Set.of(
                                         "http://127.0.0.1:9000/index",
                                         "http://127.0.0.1:3000/",
+                                        "http://127.0.0.1:3000/login",
                                         "http://127.0.0.1:3000/callback",
+                                        "http://127.0.0.1:3000/default",
+                                        "http://127.0.0.1:3000/home",
                                         "http://192.168.31.141:3000/callback",
                                         "http://192.168.160.1:3000/",
                                         "http://192.168.1.63:3000/",
                                         "http://127.0.0.1:9000/index/hello",
                                         "http://192.168.1.63:3000/login",
-                                        "http://127.0.0.1:4201/"
+                                        "http://127.0.0.1:4201/",
+                                        "http://127.0.0.1:4201/login/login-form",
+                                        "http://127.0.0.1:4201/default"
                                 ));
                             }
                         })
@@ -230,6 +239,7 @@ public class SecurityConfig {
                 .password("123456")
                 .passwordEncoder(passwordEncoder::encode)
                 .roles("USER")
+                .authorities("admin")
                 .build();
 
         return new InMemoryUserDetailsManager(userDetails);
@@ -241,7 +251,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.setAllowedOrigins(List.of("http://192.168.31.141:3000/", "http://127.0.0.1:3000", "http://192.168.1.63:3000"));
+        config.setAllowedOrigins(List.of("http://192.168.31.141:3000/", "http://127.0.0.1:3000","http://127.0.0.1:4201",  "http://192.168.1.63:3000"));
         config.setAllowCredentials(true);
         source.registerCorsConfiguration("/**", config);
         return source;
@@ -294,6 +304,39 @@ public class SecurityConfig {
     @Bean
     public OAuth2AuthorizationConsentService authorizationConsentService() {
         return new InMemoryOAuth2AuthorizationConsentService();
+    }
+
+    @Bean
+    public OAuth2TokenCustomizer<JwtEncodingContext> oAuth2TokenCustomizer() {
+        return new OAuth2TokenCustomizer<JwtEncodingContext>() {
+            @Override
+            public void customize(JwtEncodingContext context) {
+                // 检查登录用户信息是不是UserDetails，排除掉没有用户参与的流程
+                if (context.getPrincipal().getPrincipal() instanceof UserDetails user) {
+                    // 获取申请的scopes
+                    Set<String> scopes = context.getAuthorizedScopes();
+                    // 获取用户的权限
+                    Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
+                    // 提取权限并转为字符串
+                    Set<String> authoritySet = Optional.ofNullable(authorities).orElse(Collections.emptyList()).stream()
+                            // 获取权限字符串
+                            .map(GrantedAuthority::getAuthority)
+                            // 去重
+                            .collect(Collectors.toSet());
+
+                    // 合并scope与用户信息
+                    authoritySet.addAll(scopes);
+
+                    JwtClaimsSet.Builder claims = context.getClaims();
+
+                    // 将权限信息放入jwt的claims中（也可以生成一个以指定字符分割的字符串放入）
+                    claims.claim("authorities", authoritySet);
+                    claims.claim("uid", 3);
+                    // 放入其它自定内容
+                    // 角色、头像...
+                }
+            }
+        };
     }
 
 
