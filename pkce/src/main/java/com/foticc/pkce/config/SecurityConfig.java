@@ -235,15 +235,22 @@ public class SecurityConfig {
     @Bean
     UserDetailsService userDetailsService() {
         PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        UserDetails userDetails = User.builder()
+        UserDetails admin = User.builder()
                 .username("admin")
                 .password("123456")
                 .passwordEncoder(passwordEncoder::encode)
                 .roles("USER")
                 .authorities("admin")
                 .build();
+        UserDetails user = User.builder()
+                .username("user")
+                .password("123456")
+                .passwordEncoder(passwordEncoder::encode)
+                .roles("USER")
+                .authorities("user")
+                .build();
 
-        return new InMemoryUserDetailsManager(userDetails);
+        return new InMemoryUserDetailsManager(admin,user);
     }
 
     @Bean
@@ -332,7 +339,14 @@ public class SecurityConfig {
 
                     // 将权限信息放入jwt的claims中（也可以生成一个以指定字符分割的字符串放入）
                     claims.claim("authorities", authoritySet);
-                    claims.claim("uid", 3);
+
+                    // todo 只是在测试的
+                    if(user.getUsername().equals("admin")) {
+                        claims.claim("uid", 3);
+                    }else {
+                        claims.claim("uid", 4);
+                    }
+
                     // 放入其它自定内容
                     // 角色、头像...
                 }
