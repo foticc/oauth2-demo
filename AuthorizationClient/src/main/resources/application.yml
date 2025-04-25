@@ -38,20 +38,20 @@ spring:
     oauth2:
       client:
         provider:
-          custom-issuer:
+          custom-local:
 #            issuer-uri: http://spring-oauth-server:8080
-            issuer-uri: http://192.168.160.128:8888
-            authorizationUri: ${spring.security.oauth2.client.provider.custom-issuer.issuer-uri}/oauth2/authorize
-            tokenUri: ${spring.security.oauth2.client.provider.custom-issuer.issuer-uri}/oauth2/token
+            issuerUri: http://spring-oauth-server:8888
+            authorizationUri: ${spring.security.oauth2.client.provider.custom-local.issuerUri}/oauth2/authorize
+            tokenUri: ${spring.security.oauth2.client.provider.custom-local.issuerUri}/oauth2/token
         registration:
-          messaging-client-oidc:
-            provider: custom-issuer
+          oidc-client:
+            provider: custom-local
             client-name: message-client
-            client-id: client-msg
-            client-secret: 123456
+            client-id: oidc-client
+            client-secret: secret
             client-authentication-method: client_secret_basic
             authorization-grant-type: authorization_code
-            redirect-uri: http://spring-oauth-client:9001/login/oauth2/code/messaging-client-oidc
+            redirect-uri: http://spring-oauth-client:9001/test
             scope:
               - profile
               - openid

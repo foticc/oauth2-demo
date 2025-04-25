@@ -38,7 +38,10 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  *
@@ -125,14 +128,25 @@ public class SecurityConfig {
                 .clientId("oidc-client")
                 //{noop}开头，表示“secret”以明文存储
                 .clientSecret("{noop}secret")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
                 //.redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
-                //将上面的redirectUri地址注释掉，改成下面的地址，是因为我们暂时还没有客户端服务，以免重定向跳转错误导致接收不到授权码
-                .redirectUri("http://www.baidu.com")
+                .redirectUris(new Consumer<Set<String>>() {
+                    @Override
+                    public void accept(Set<String> strings) {
+                        strings.addAll(List.of(
+                                "http://www.baidu.com",
+                                "http://spring-oauth-client:9001/test",
+                                "http://spring-oauth-client:9001/token"
+                        ));
+                    }
+                })
                 //退出操作，重定向地址，暂时也没遇到
-                .postLogoutRedirectUri("http://127.0.0.1:8080/")
+                .postLogoutRedirectUri("http://www.baidu.com")
                 //设置客户端权限范围
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)

@@ -2,11 +2,17 @@ package com.example.authorizationpasswordserver.config;
 
 import com.example.authorizationpasswordserver.password.PasswordAuthenticationConverter;
 import com.example.authorizationpasswordserver.password.PasswordGrantAuthenticationProvider;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -45,11 +51,15 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
+import java.util.Date;
 import java.util.UUID;
 
 
@@ -124,11 +134,12 @@ public class AuthorizationServerConfig {
         RegisteredClient client = RegisteredClient.withId("clientid")
                 .clientId("client-msg")
                 .clientName("客户端")
-                .clientSecret(passwordEncoder.encode("123456"))
+                .clientSecret(passwordEncoder.encode("1234567890123456789012345678901234567890"))
 //                .clientSecret(token)
                 //客户端认证方式 ，
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)   //basic认证 Authorization: Basic Y2xpZW50LW1zZzoxMjM0NTYx
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)  // 使用签名的jwt client_assertion_type:urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+                                                                                            //client_assertion:eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjbGllbnQtbXNnIiwic3ViIjoiY2xpZW50LW1zZyIsImF1ZCI6Imh0dHA6Ly8xMjcuMC4wLjE6ODg4OSIsImV4cCI6MTc0MDM0NzgxOX0.H9XIDe5khSRPtnITeGWsBQBdm3OjL_aooq92uRCce3Q
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)  //账号密码放表单里
                 // 配置该客户端支持的授权方式
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
@@ -144,7 +155,12 @@ public class AuthorizationServerConfig {
                 .scope(OidcScopes.PROFILE)
                 .scope(OidcScopes.OPENID)
                 // 客户端设置，设置用户需要确认授权
-                .clientSettings(ClientSettings.builder().requireProofKey(true).requireAuthorizationConsent(true).tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256).build())
+                .clientSettings(ClientSettings.builder()
+                        .requireProofKey(true)
+                        .requireAuthorizationConsent(true)
+                        .tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256)
+                        .jwkSetUrl("http://127.0.0.1:8889/oauth2/jwks")
+                        .build())
                 // token的相关设置
                 .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(24)).refreshTokenTimeToLive(Duration.ofHours(48)).build())
                 .build();
@@ -253,6 +269,29 @@ public class AuthorizationServerConfig {
         OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
         return new DelegatingOAuth2TokenGenerator(
                 jwtGenerator, accessTokenGenerator, refreshTokenGenerator);
+    }
+
+    // client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+    public static void main(String[] args) throws JOSEException {
+        String clientId = "client-msg";
+
+        String clientSecret = "1234567890123456789012345678901234567890";
+
+        SecretKeySpec secretKeySpec = new SecretKeySpec(clientSecret.getBytes(StandardCharsets.UTF_8),"HmacSHA256");
+
+        MACSigner macSigner = new MACSigner(secretKeySpec);
+
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject(clientId)
+                .issuer(clientId)
+                .audience("http://127.0.0.1:8889")
+                .expirationTime(new Date(System.currentTimeMillis() + 60 * 60 * 60 * 1000))
+                .build();
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+        signedJWT.sign(macSigner);
+        String serialize = signedJWT.serialize();
+        System.out.println("serialize = " + serialize);
+
     }
 
 }
