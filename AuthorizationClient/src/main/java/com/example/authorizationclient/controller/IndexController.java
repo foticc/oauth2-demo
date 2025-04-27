@@ -1,6 +1,8 @@
 package com.example.authorizationclient.controller;
 
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +24,9 @@ public class IndexController {
 
     @GetMapping("/test")
     public String test() {
-        return "test";
+        SecurityContext context = SecurityContextHolder.getContext();
+        System.out.println("context = " + context);
+        return context.getAuthentication().getName();
     }
 
 }

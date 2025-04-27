@@ -41,8 +41,8 @@ spring:
           custom-local:
 #            issuer-uri: http://spring-oauth-server:8080
             issuerUri: http://spring-oauth-server:8888
-            authorizationUri: ${spring.security.oauth2.client.provider.custom-local.issuerUri}/oauth2/authorize
-            tokenUri: ${spring.security.oauth2.client.provider.custom-local.issuerUri}/oauth2/token
+            authorizationUri: http://spring-oauth-server:8888/oauth2/authorize
+            tokenUri: http://spring-oauth-server:8888/oauth2/token
         registration:
           oidc-client:
             provider: custom-local
@@ -51,7 +51,7 @@ spring:
             client-secret: secret
             client-authentication-method: client_secret_basic
             authorization-grant-type: authorization_code
-            redirect-uri: http://spring-oauth-client:9001/test
+            redirect-uri: http://spring-oauth-client:9001/login/oauth2/code/oidc-client
             scope:
               - profile
               - openid

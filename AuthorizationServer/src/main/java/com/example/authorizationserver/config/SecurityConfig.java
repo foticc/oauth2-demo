@@ -140,8 +140,7 @@ public class SecurityConfig {
                     public void accept(Set<String> strings) {
                         strings.addAll(List.of(
                                 "http://www.baidu.com",
-                                "http://spring-oauth-client:9001/test",
-                                "http://spring-oauth-client:9001/token"
+                                "http://spring-oauth-client:9001/login/oauth2/code/oidc-client"
                         ));
                     }
                 })
